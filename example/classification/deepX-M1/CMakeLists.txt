@@ -30,7 +30,7 @@ set_target_properties(AI_BMT_GUI_Submitter PROPERTIES
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
 # Step 3
-LIST(APPEND link_libs ${CMAKE_CURRENT_SOURCE_DIR}/build/libSNU_AI_BMT_GUI_Library.so)
+LIST(APPEND link_libs ${CMAKE_CURRENT_SOURCE_DIR}/build/libAI_BMT_GUI_Library.so)
 add_target(AI_BMT_GUI_Submitter)
 
 
