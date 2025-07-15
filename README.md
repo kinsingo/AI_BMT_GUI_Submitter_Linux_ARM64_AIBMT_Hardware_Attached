@@ -154,18 +154,18 @@ public:
   cmake -G "Ninja" ..
   ```
 
-**3. Build the project**
-
-- Run the following command to build the project using the build system configured by CMake in the current directory. This will compile the project and create the executable AI_BMT_GUI_Submitter.exe in the build folder.
-  ```bash
-  cmake --build .
-  ```
-
-**4. Setting Library Path for Executable in Current Directory**
+**3. Setting Library Path for Executable in Current Directory**
 
 - Run the following command to make the executable(AI_BMT_GUI_Submitter) can reference the libraries located in the lib folder of the current directory.
   ```bash
   export LD_LIBRARY_PATH=$(pwd)/lib:$LD_LIBRARY_PATH
+  ```
+
+**4. Build the project**
+
+- Run the following command to build the project using the build system configured by CMake in the current directory. This will compile the project and create the executable AI_BMT_GUI_Submitter.exe in the build folder.
+  ```bash
+  cmake --build .
   ```
 
 **5. Start Performance Analysis**
@@ -178,8 +178,8 @@ public:
 **Run all commands at once (For Initial Build)**
 
 ```bash
-git clone https://github.com/kinsingo/SNU_BMT_GUI_Submitter_Linux_ARM64.git
-cd SNU_BMT_GUI_Submitter_Linux_ARM64/build/
+git clone https://github.com/kinsingo/SNU_BMT_GUI_Submitter_Linux.git
+cd SNU_BMT_GUI_Submitter_Linux/build/
 sudo apt update
 sudo apt install cmake
 sudo apt install build-essential
@@ -188,8 +188,8 @@ sudo apt-get install libgl1 libgl1-mesa-dev
 sudo apt install unzip
 rm -rf CMakeCache.txt CMakeFiles AI_BMT_GUI_Submitter
 cmake -G "Ninja" ..
-cmake --build .
 export LD_LIBRARY_PATH=$(pwd)/lib:$LD_LIBRARY_PATH
+cmake --build .
 ./AI_BMT_GUI_Submitter
 ```
 
@@ -199,8 +199,8 @@ export LD_LIBRARY_PATH=$(pwd)/lib:$LD_LIBRARY_PATH
 ```bash
 rm -rf CMakeCache.txt CMakeFiles AI_BMT_GUI_Submitter
 cmake -G "Ninja" ..
-cmake --build .
 export LD_LIBRARY_PATH=$(pwd)/lib:$LD_LIBRARY_PATH
+cmake --build .
 ./AI_BMT_GUI_Submitter
 ```
 
