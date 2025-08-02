@@ -54,7 +54,7 @@ hailo_status run_inference_async(std::shared_ptr<BoundedTSQueue<PreprocessedFram
         PreprocessedFrameItem item;
         if (!preprocessed_queue->pop(item))
             break;
-        
+
         model->infer(std::make_shared<vector<uint8_t>>(item.resized_for_infer), item.frame_idx);
     }
 
@@ -90,7 +90,6 @@ hailo_status run_post_process(std::shared_ptr<BoundedTSQueue<InferenceOutputItem
 
 class Virtual_Submitter_Implementation : public AI_BMT_Interface
 {
-    // string modelPath;
     std::shared_ptr<BoundedTSQueue<PreprocessedFrameItem>> preprocessed_queue;
     std::shared_ptr<BoundedTSQueue<InferenceOutputItem>> results_queue;
     shared_ptr<AsyncModelInfer> model;
@@ -98,7 +97,6 @@ class Virtual_Submitter_Implementation : public AI_BMT_Interface
 public:
     Virtual_Submitter_Implementation()
     {
-        
     }
 
     virtual Optional_Data getOptionalData() override
@@ -117,7 +115,7 @@ public:
         return data;
     }
 
-   virtual void Initialize(string modelPath) override
+    virtual void Initialize(string modelPath) override
     {
         model = make_shared<AsyncModelInfer>();
         model->crt();
@@ -182,13 +180,10 @@ public:
 
 int main(int argc, char *argv[])
 {
-    filesystem::path exePath = filesystem::absolute(argv[0]).parent_path(); // Get the current executable file path
-    filesystem::path model_path = exePath / "Model" / "Classification" / "mobilenet_v2_opset10.hef";
-    string modelPath = model_path.string();
     try
     {
         shared_ptr<AI_BMT_Interface> interface = make_shared<Virtual_Submitter_Implementation>();
-        AI_BMT_GUI_CALLER caller(interface, modelPath);
+        AI_BMT_GUI_CALLER caller(interface);
         return caller.call_BMT_GUI(argc, argv);
     }
     catch (const exception &ex)

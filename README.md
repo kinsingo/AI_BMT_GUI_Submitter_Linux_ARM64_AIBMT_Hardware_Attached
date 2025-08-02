@@ -1,4 +1,4 @@
-> **Last Updated:** 2025-07-16
+> **Last Updated:** 2025-08-03
 
 ## Environment
 
@@ -48,9 +48,7 @@ Step3) Build and Start BMT
 #include "label_type.h"
 using namespace std;
 
-// Represents the result of the inference process for a single batch.
-// Fields:
-// - Classification_ImageNet_PredictedIndex_0_to_999: An integer representing the predicted class index (0-999) for the ImageNet dataset.
+// Represents the result of the inference process for a single query.
 struct EXPORT_SYMBOL BMTResult
 {
     // Output scores for 1000 ImageNet classes from the classification model.
@@ -59,10 +57,17 @@ struct EXPORT_SYMBOL BMTResult
     vector<float> classProbabilities;
 
     // Output tensor from object detection model.
-    // The vector stores raw model outputs for 25200 detection candidates.
-    // Each candidate includes 85 values: [x, y, w, h, objectness, 80 class scores].
-    // Total size must be exactly 25200 * 85 = 2,142,000 elements.
+    // This vector stores raw model outputs (e.g., bounding boxes, objectness, class scores).
+    // Expected size depends on the YOLO model variant:
+    // - YOLOv5:     25200 × 85 = 2,142,000 elements
+    // - YOLOv5u/8/9/11/12:  8400 × 84 = 705,600 elements
+    // - YOLOv10:    300 × 6 = 1,800 elements
     vector<float> objectDetectionResult;
+
+    // Output tensor from emantic segmentation model.
+    // Each value represents the score (e.g., logits or probabilities) of a class at a specific pixel location..
+    // Total size must be exactly 21(Classes) x 520(Height) x 520(Width) = 5,678,400 elements.
+    vector<float> segmentationResult;
 };
 
 // Stores optional system configuration data provided by the Submitter.
@@ -84,12 +89,20 @@ struct EXPORT_SYMBOL Optional_Data
 // A variant can store and manage values only from a fixed set of types determined at compile time.
 // Since variant manages types statically, it can be used with minimal runtime type-checking overhead.
 // std::get<DataType>(variant) checks if the requested type matches the stored type and returns the value if they match.
-using VariantType = variant<uint8_t*, uint16_t*, uint32_t*,
-                            int8_t*,int16_t*,int32_t*,
-                            float*, // Define variant pointer types
-                            vector<uint8_t>, vector<uint16_t>, vector<uint32_t>,
-                            vector<int8_t>, vector<int16_t>, vector<int32_t>,
-                            vector<float>>; // Define variant vector types
+using VariantType = variant<
+    // Vector-based types
+    vector<uint8_t>, vector<uint16_t>, vector<uint32_t>,
+    vector<int8_t>,  vector<int16_t>,  vector<int32_t>,
+    vector<float>,
+
+    // Raw pointer types
+    uint8_t*, uint16_t*, uint32_t*,
+    int8_t*,  int16_t*,  int32_t*,
+    float*,
+
+    // Python object (e.g., numpy.ndarray, torch.Tensor, etc.)
+    PythonObject
+    >;
 
 class EXPORT_SYMBOL AI_BMT_Interface
 {
@@ -196,6 +209,7 @@ cmake --build .
 **Run all commands at once (For Rebuild)**
 
 - Using following commands in `build/` directory.
+
 ```bash
 rm -rf CMakeCache.txt CMakeFiles AI_BMT_GUI_Submitter
 cmake -G "Ninja" ..
@@ -207,6 +221,7 @@ cmake --build .
 **Execute AI-BMT App**
 
 - Using following commands in `build/` directory.
+
 ```bash
 export LD_LIBRARY_PATH=$(pwd)/lib
 ./AI_BMT_GUI_Submitter
