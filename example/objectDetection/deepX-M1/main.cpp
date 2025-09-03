@@ -11,8 +11,7 @@ int main(int argc, char *argv[])
     try
     {
         shared_ptr<AI_BMT_Interface> interface = make_shared<ObjectDetection_Implementation_SingleCore>();
-        AI_BMT_GUI_CALLER caller(interface);
-        return caller.call_BMT_GUI(argc, argv);
+        return AI_BMT_GUI_CALLER::call_BMT_GUI_For_Single_Task(argc, argv, interface);
     }
     catch (const exception &ex)
     {

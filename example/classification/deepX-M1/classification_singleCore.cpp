@@ -22,7 +22,12 @@ public:
         return data;
     }
 
-    virtual void Initialize(string modelPath) override
+    virtual InterfaceType getInterfaceType() override
+    {
+        return InterfaceType::ImageClassification;
+    }
+
+    virtual void initialize(string modelPath) override
     {
         cout << "Initialze() is called" << endl;
         ie = make_shared<dxrt::InferenceEngine>(modelPath);
@@ -30,7 +35,7 @@ public:
         align_factor = (input_w * input_c) - align_factor;
     }
 
-    virtual VariantType convertToPreprocessedDataForInference(const string &imagePath) override
+    virtual VariantType preprocessVisionData(const string &imagePath) override
     {
         cv::Mat input;
         input = cv::imread(imagePath, cv::IMREAD_COLOR);
@@ -43,14 +48,14 @@ public:
         return inputBuf;
     }
 
-    virtual vector<BMTResult> runInference(const vector<VariantType> &data) override
+    virtual vector<BMTVisionResult> inferVision(const vector<VariantType> &data) override
     {
-        vector<BMTResult> queryResult;
+        vector<BMTVisionResult> queryResult;
         const int querySize = data.size();
         for (int i = 0; i < querySize; i++)
         {
             vector<uint8_t> inputBuf = get<vector<uint8_t>>(data[i]);
-            BMTResult result;
+            BMTVisionResult result;
             auto outputs = ie->Run(inputBuf.data());
             float *output_data = (float *)outputs.front()->data();
             vector<float> output(output_data, output_data + 1000);

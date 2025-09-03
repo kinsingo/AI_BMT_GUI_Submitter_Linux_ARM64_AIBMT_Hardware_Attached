@@ -13,6 +13,11 @@ class ObjectDetection_Implementation_SingleCore : public AI_BMT_Interface
     int input_w = 640, input_h = 640, input_c = 3;
 
 public:
+    virtual InterfaceType getInterfaceType() override
+    {
+        return InterfaceType::;
+    }
+
     virtual Optional_Data getOptionalData() override
     {
         Optional_Data data;
@@ -22,7 +27,7 @@ public:
         return data;
     }
 
-    virtual void Initialize(string modelPath) override
+    virtual void initialize(string modelPath) override
     {
         cout << "Initialze() is called" << endl;
         ie = make_shared<dxrt::InferenceEngine>(modelPath);
@@ -30,7 +35,7 @@ public:
         align_factor = (input_w * input_c) - align_factor;
     }
 
-    virtual VariantType convertToPreprocessedDataForInference(const string &imagePath) override
+    virtual VariantType preprocessVisionData(const string &imagePath) override
     {
         cv::Mat input;
         input = cv::imread(imagePath, cv::IMREAD_COLOR);
@@ -44,9 +49,9 @@ public:
     }
 
     // Example Code for (YoloV5n/s/m)
-    virtual vector<BMTResult> runInference(const vector<VariantType> &data) override
+    virtual vector<BMTVisionResult> inferVision(const vector<VariantType> &data) override
     {
-        vector<BMTResult> queryResult;
+        vector<BMTVisionResult> queryResult;
         const int querySize = data.size();
 
         // YOLOv5n Anchor definitions (standard)
@@ -63,7 +68,7 @@ public:
             vector<uint8_t> inputBuf = get<vector<uint8_t>>(data[i]);
             vector<shared_ptr<dxrt::Tensor>> outputs = ie->Run(inputBuf.data());
 
-            BMTResult result;
+            BMTVisionResult result;
             vector<float *> feature_maps;
             for (int i = 0; i < outputs.size(); i++)
                 feature_maps.push_back((float *)outputs[i]->data());

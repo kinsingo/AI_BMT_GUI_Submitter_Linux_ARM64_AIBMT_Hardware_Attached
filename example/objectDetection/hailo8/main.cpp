@@ -53,7 +53,7 @@ hailo_status run_inference_async(std::shared_ptr<BoundedTSQueue<PreprocessedFram
     return HAILO_SUCCESS;
 }
 
-hailo_status run_post_process(std::shared_ptr<BoundedTSQueue<InferenceOutputItem>> results_queue, vector<BMTResult> &batchResult, size_t bs)
+hailo_status run_post_process(std::shared_ptr<BoundedTSQueue<InferenceOutputItem>> results_queue, vector<BMTVisionResult> &batchResult, size_t bs)
 {
     // YOLOv5n Anchor definitions (standard)
     vector<vector<pair<float, float>>> anchors = {
@@ -113,7 +113,7 @@ hailo_status run_post_process(std::shared_ptr<BoundedTSQueue<InferenceOutputItem
             }
         }
 
-        BMTResult result;
+        BMTVisionResult result;
         result.objectDetectionResult = output;
         batchResult[frame_idx] = result;
         if ((++i) == bs)
@@ -134,6 +134,11 @@ public:
     {
     }
 
+    virtual InterfaceType getInterfaceType() override
+    {
+        return InterfaceType::ObjectDetection;
+    }
+
     virtual Optional_Data getOptionalData() override
     {
         Optional_Data data;
@@ -150,7 +155,7 @@ public:
         return data;
     }
 
-    virtual void Initialize(string modelPath) override
+    virtual void initialize(string modelPath) override
     {
         model = make_shared<AsyncModelInfer>();
         model->crt();
@@ -160,7 +165,7 @@ public:
         model->configure(results_queue);
     }
 
-    virtual VariantType convertToPreprocessedDataForInference(const string &imagePath) override
+    virtual VariantType preprocessVisionData(const string &imagePath) override
     {
         cv::Mat img = cv::imread(imagePath, cv::IMREAD_COLOR);
         cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
@@ -169,10 +174,10 @@ public:
         return inputBuf;
     }
 
-    virtual vector<BMTResult> runInference(const vector<VariantType> &data) override
+    virtual vector<BMTVisionResult> inferVision(const vector<VariantType> &data) override
     {
         size_t frame_count = data.size();
-        vector<BMTResult> batchResult(frame_count);
+        vector<BMTVisionResult> batchResult(frame_count);
         for (size_t i = 0; i < frame_count; i += MAX_QUEUE_SIZE)
         {
             size_t currentBatchSize = min(MAX_QUEUE_SIZE, frame_count - i);
@@ -212,8 +217,7 @@ int main(int argc, char *argv[])
     try
     {
         shared_ptr<AI_BMT_Interface> interface = make_shared<Virtual_Submitter_Implementation>();
-        AI_BMT_GUI_CALLER caller(interface);
-        return caller.call_BMT_GUI(argc, argv);
+        return AI_BMT_GUI_CALLER::call_BMT_GUI_For_Single_Task(argc, argv, interface);
     }
     catch (const exception &ex)
     {

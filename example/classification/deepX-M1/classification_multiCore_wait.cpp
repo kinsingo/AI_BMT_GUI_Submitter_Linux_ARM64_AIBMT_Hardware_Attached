@@ -32,7 +32,12 @@ public:
         return data;
     }
 
-    virtual void Initialize(string modelPath) override
+    virtual InterfaceType getInterfaceType() override
+    {
+        return InterfaceType::ImageClassification;
+    }
+
+    virtual void initialize(string modelPath) override
     {
         cout << "Initialze() is called" << endl;
         align_factor = ((int)(input_w * input_c)) & (-64);
@@ -40,7 +45,7 @@ public:
         ie = make_shared<dxrt::InferenceEngine>(modelPath);
     }
 
-    virtual VariantType convertToPreprocessedDataForInference(const string &imagePath) override
+    virtual VariantType preprocessVisionData(const string &imagePath) override
     {
         cv::Mat input;
         input = cv::imread(imagePath, cv::IMREAD_COLOR);
@@ -53,10 +58,10 @@ public:
         return inputBuf;
     }
 
-    virtual vector<BMTResult> runInference(const vector<VariantType> &data) override
+    virtual vector<BMTVisionResult> inferVision(const vector<VariantType> &data) override
     {
         int querySize = data.size();
-        vector<BMTResult> queryResult(querySize);
+        vector<BMTVisionResult> queryResult(querySize);
         vector<int> reqIds(querySize);
         vector<vector<uint8_t>> inputBufs(querySize); // the inputBuf's memory must be maintained until the callback function or wait is called.
         const int maxConcurrentRequests = 3;
@@ -82,7 +87,7 @@ public:
                                              {
                 auto outputs = ie->Wait(reqIds[index]);
                 inputBufs[index].clear(); // input buffer 해제
-                BMTResult result;
+                BMTVisionResult result;
                 float *output_data = (float *)outputs.front()->data();
                 vector<float> output(output_data, output_data + 1000);
                 result.classProbabilities = output;
