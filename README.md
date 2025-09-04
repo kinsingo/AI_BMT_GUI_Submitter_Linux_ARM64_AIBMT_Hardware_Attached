@@ -57,7 +57,7 @@ public:
    // return the implemented interface task type.
    virtual InterfaceType getInterfaceType() = 0;
 
-   // This initialize(..) function is guaranteed to be called before preprocessV and inferVision are executed.
+   // This initialize(..) function is guaranteed to be called before preprocess(..) and infer(..) are executed.
    // The submitter can load the model using the provided modelPath
    virtual void initialize(string modelPath) = 0;
 
