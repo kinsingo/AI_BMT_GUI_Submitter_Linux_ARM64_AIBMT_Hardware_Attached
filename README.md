@@ -1,4 +1,4 @@
-> **Last Updated:** 2025-09-03 (Added LLM Tasks, Multi-Domain Tasks, and Custom Dataset Evaluation Modes)
+> **Last Updated:** 2025-10-06 (Added HellaSwag, MMLU LLM Tasks)
 
 ## Environment
 
