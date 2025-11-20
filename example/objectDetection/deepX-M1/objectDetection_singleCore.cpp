@@ -15,7 +15,7 @@ class ObjectDetection_Implementation_SingleCore : public AI_BMT_Interface
 public:
     virtual InterfaceType getInterfaceType() override
     {
-        return InterfaceType::;
+        return InterfaceType::ObjectDetection;
     }
 
     virtual Optional_Data getOptionalData() override
@@ -31,8 +31,6 @@ public:
     {
         cout << "Initialze() is called" << endl;
         ie = make_shared<dxrt::InferenceEngine>(modelPath);
-        align_factor = ((int)(input_w * input_c)) & (-64);
-        align_factor = (input_w * input_c) - align_factor;
     }
 
     virtual VariantType preprocessVisionData(const string &imagePath) override
@@ -40,7 +38,9 @@ public:
         cv::Mat input;
         input = cv::imread(imagePath, cv::IMREAD_COLOR);
         cv::cvtColor(input, input, cv::COLOR_BGR2RGB);
-        return std::vector<uint8_t>(input.data, input.data + input.total() * input.elemSize());
+        vector<uint8_t> inputBuf(ie->GetInputSize(), 0);
+        memcpy(&inputBuf[0], &input.data[0], ie->GetInputSize());
+        return inputBuf;
     }
 
     inline float sigmoid(float x)
@@ -67,64 +67,15 @@ public:
         {
             vector<uint8_t> inputBuf = get<vector<uint8_t>>(data[i]);
             vector<shared_ptr<dxrt::Tensor>> outputs = ie->Run(inputBuf.data());
-
             BMTVisionResult result;
-            vector<float *> feature_maps;
-            for (int i = 0; i < outputs.size(); i++)
-                feature_maps.push_back((float *)outputs[i]->data());
+            float *output_data = (float *)outputs.front()->data();
 
-            vector<float> output;
-            output.reserve(25200 * 85); // 2142000
-            for (int i = 0; i < outputs.size(); ++i)
-            {
-                auto out = outputs[i];
-                auto shape = out->shape(); // [1, H, W, 256]
-                float *data = (float *)out->data();
-
-                int H = shape[1];
-                int W = shape[2];
-                int C = shape[3]; // 256
-
-                const auto &anchorSet = anchors[i];
-                int stride = strides[i];
-
-                for (int y = 0; y < H; ++y)
-                {
-                    for (int x = 0; x < W; ++x)
-                    {
-                        for (int a = 0; a < 3; ++a)
-                        {
-                            float raw[85];
-                            int offset = ((y * W + x) * C) + (a * 85);
-                            memcpy(raw, data + offset, sizeof(float) * 85);
-
-                            // anchor
-                            float pw = anchorSet[a].first;
-                            float ph = anchorSet[a].second;
-
-                            // center
-                            raw[0] = (sigmoid(raw[0]) * 2.0f - 0.5f + x) * stride;
-                            raw[1] = (sigmoid(raw[1]) * 2.0f - 0.5f + y) * stride;
-
-                            // size
-                            raw[2] = pow(sigmoid(raw[2]) * 2.0f, 2.0f) * pw;
-                            raw[3] = pow(sigmoid(raw[3]) * 2.0f, 2.0f) * ph;
-
-                            // confidence
-                            raw[4] = sigmoid(raw[4]);
-
-                            // class probs
-                            for (int c = 5; c < 85; ++c)
-                                raw[c] = sigmoid(raw[c]);
-
-                            // confidence threshold나 NMS는 나중에 사용
-                            output.insert(output.end(), raw, raw + 85);
-                        }
-                    }
-                }
-            }
-            // cout << "output size: " << output.size() << " (expect 25200 × 85 = 2142000)" << endl;
+            //(25200 * 85) : Yolov5
+            //(84 * 8400) : Yolov5u, Yolov8, Yolov9, Yolo11, Yolo12
+            //(300 * 6) : Yolov10
+            vector<float> output(output_data, output_data + (84 * 8400));
             result.objectDetectionResult = output;
+
             queryResult.push_back(result);
         }
 

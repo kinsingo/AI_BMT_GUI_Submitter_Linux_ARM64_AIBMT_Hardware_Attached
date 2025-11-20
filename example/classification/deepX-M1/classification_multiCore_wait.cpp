@@ -15,34 +15,33 @@
 using namespace std;
 using namespace cv;
 
-class Classification_Implementation_MultiCore_Wait : public AI_BMT_Interface
+class Classification_Implementation_DXNN_MultiThreads : public AI_BMT_Interface
 {
     shared_ptr<dxrt::InferenceEngine> ie;
-    int align_factor;
     int input_w = 224, input_h = 224, input_c = 3;
+    const int maxConcurrentRequests = 64;
 
 public:
-    virtual Optional_Data getOptionalData() override
-    {
-        Optional_Data data;
-        data.cpu_type = "Rockchip RK3588";
-        data.accelerator_type = "M1(NPU) Async(Wait)";
-        data.submitter = "DeepX";
-        data.benchmark_model = "regnet_y_800mf_opset10.dxnn";
-        return data;
-    }
-
     virtual InterfaceType getInterfaceType() override
     {
         return InterfaceType::ImageClassification;
     }
 
+    virtual Optional_Data getOptionalData() override
+    {
+        Optional_Data data;
+        data.cpu_type = "Rockchip RK3588";
+        data.accelerator_type = "M1(NPU)";
+        data.submitter = "DeepX";
+        data.operating_system = "Ubuntu24.04 LTS"; // e.g., Ubuntu 20.04.5 LTS
+        return data;
+    }
+
     virtual void initialize(string modelPath) override
     {
         cout << "Initialze() is called" << endl;
-        align_factor = ((int)(input_w * input_c)) & (-64);
-        align_factor = (input_w * input_c) - align_factor;
         ie = make_shared<dxrt::InferenceEngine>(modelPath);
+        cout << "maxConcurrentRequests : " << maxConcurrentRequests << endl;
     }
 
     virtual VariantType preprocessVisionData(const string &imagePath) override
@@ -50,11 +49,8 @@ public:
         cv::Mat input;
         input = cv::imread(imagePath, cv::IMREAD_COLOR);
         cv::cvtColor(input, input, cv::COLOR_BGR2RGB);
-        vector<uint8_t> inputBuf(input_h * (input_w * input_c + align_factor));
-        for (int y = 0; y < input_h; y++)
-        {
-            memcpy(&inputBuf[y * (input_w * input_c + align_factor)], &input.data[y * input_w * input_c], input_w * input_c);
-        }
+        vector<uint8_t> inputBuf(ie->GetInputSize(), 0);
+        memcpy(&inputBuf[0], &input.data[0], ie->GetInputSize());
         return inputBuf;
     }
 
@@ -63,8 +59,7 @@ public:
         int querySize = data.size();
         vector<BMTVisionResult> queryResult(querySize);
         vector<int> reqIds(querySize);
-        vector<vector<uint8_t>> inputBufs(querySize); // the inputBuf's memory must be maintained until the callback function or wait is called.
-        const int maxConcurrentRequests = 3;
+        vector<vector<uint8_t>> inputBufs(querySize);
 
         for (int i = 0; i < querySize; i += maxConcurrentRequests)
         {
