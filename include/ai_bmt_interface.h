@@ -109,13 +109,6 @@ enum class InterfaceType
 
     LLM_Bert_GLUE,
 
-<<<<<<< HEAD
-=======
-    LLM_QWEN_Hellaswag,
-    LLM_Gemma_Hellaswag, //251206
-    LLM_Llama_Hellaswag, //251206
-
->>>>>>> 59cbace09c5ad7145a270a4a0181bb1fdf7fd0f1
     LLM_QWEN_MMLU,
     LLM_Gemma_MMLU,//251206
     LLM_Llama_MMLU,//251206
