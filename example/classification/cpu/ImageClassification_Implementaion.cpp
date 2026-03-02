@@ -31,6 +31,11 @@ public:
 		return InterfaceType::ImageClassification;
     }
 
+    virtual PowerDeviceType getPowerDeviceType() override
+    { 
+        return PowerDeviceType::None; 
+    }
+
 
     virtual void initialize(string modelPath) override
     {

@@ -32,6 +32,11 @@ public:
         return InterfaceType::SemanticSegmentation;
     }
 
+    virtual PowerDeviceType getPowerDeviceType() override
+    { 
+        return PowerDeviceType::None; 
+    }
+
     virtual void initialize(string modelPath) override
     {
         this->modelPath = modelPath;

@@ -17,6 +17,11 @@ public:
         // return InterfaceType::ImageClassification_CustomDataset;
     }
 
+    virtual PowerDeviceType getPowerDeviceType() override
+    {
+        return PowerDeviceType::None;
+    }
+
     virtual void initialize(string modelPath) override
     {
         // load the model here
