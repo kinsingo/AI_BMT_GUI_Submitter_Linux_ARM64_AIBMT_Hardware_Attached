@@ -1,9 +1,9 @@
-> **Last Updated:** 2026-03-03 (Version 2.3)
+> **Last Updated:** 2026-03-18 (Version 2.4)
 
 ## Environment
 
 1.  ISA(Instruction Set Architecture) : ARM64(aarch64)
-2.  OS : Ubuntu 24.04 LTS
+2.  OS : Ubuntu 22.04 LTS, Ubuntu 24.04 LTS
 
 ## Submitter User Guide Steps
 
