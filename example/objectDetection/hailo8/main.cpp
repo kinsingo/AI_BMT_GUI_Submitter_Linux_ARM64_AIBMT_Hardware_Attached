@@ -73,7 +73,7 @@ hailo_status run_post_process(std::shared_ptr<BoundedTSQueue<InferenceOutputItem
 
         auto frame_idx = output_item.frame_idx;
         vector<float> output;
-        output.reserve(25200 * 85); // 2142000
+        output.reserve(25200 * 85); // 2142000 (Yolov5, Yolov7)
 
         for (size_t tensor_index = 0; tensor_index < output_item.output_data_and_infos.size(); ++tensor_index)
         {

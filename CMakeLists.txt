@@ -7,21 +7,40 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(PROJECT_SOURCES main.cpp)
 
-# Create the executable
+# ── ONNX Runtime ──────────────────────────────────────────────────────────────
+# Headers from the official 1.20.0 ARM64 release package (third_party/).
+# The .so files are symlinked to the GPU-enabled library in the ai-bmt conda env.
+set(ONNXRUNTIME_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/third_party/onnxruntime)
+set(ONNXRUNTIME_INCLUDE  ${ONNXRUNTIME_DIR}/include)
+set(ONNXRUNTIME_LIB_DIR  ${ONNXRUNTIME_DIR}/lib)
+# Runtime provider plugin directory (CUDA / TensorRT .so files reside here)
+set(ORT_PROVIDER_DIR
+    "/home/jhyi/miniconda3/envs/ai-bmt/lib/python3.10/site-packages/onnxruntime/capi")
+
+# ── OpenCV ────────────────────────────────────────────────────────────────────
+find_package(OpenCV REQUIRED)
+
+# ── Executable ────────────────────────────────────────────────────────────────
 add_executable(AI_BMT_GUI_Submitter ${PROJECT_SOURCES})
 
-# Add the directory where the headers are located
-target_include_directories(AI_BMT_GUI_Submitter PUBLIC 
-${CMAKE_CURRENT_SOURCE_DIR}/include
+# Include directories
+target_include_directories(AI_BMT_GUI_Submitter PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${ONNXRUNTIME_INCLUDE}
+    ${OpenCV_INCLUDE_DIRS}
 )
 
-# Link the libraries to the executable
-target_link_libraries(AI_BMT_GUI_Submitter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/build/libAI_BMT_GUI_Library.so)
+# Link libraries
+target_link_libraries(AI_BMT_GUI_Submitter PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/build/libAI_BMT_GUI_Library.so
+    ${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so
+    ${OpenCV_LIBS}
+)
 
-# Set RPATH to include the lib directory during the build and install phases
+# Set RPATH so the binary can locate onnxruntime and its provider plugins at runtime
 set_target_properties(AI_BMT_GUI_Submitter PROPERTIES
-    BUILD_RPATH "${CMAKE_BINARY_DIR}/lib"
-    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
+    BUILD_RPATH   "${CMAKE_BINARY_DIR}/lib;${ONNXRUNTIME_LIB_DIR};${ORT_PROVIDER_DIR}"
+    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${ONNXRUNTIME_LIB_DIR};${ORT_PROVIDER_DIR}"
     INSTALL_RPATH_USE_LINK_PATH TRUE
 )
 

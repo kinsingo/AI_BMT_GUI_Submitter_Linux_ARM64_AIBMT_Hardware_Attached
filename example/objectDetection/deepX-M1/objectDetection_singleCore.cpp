@@ -70,7 +70,8 @@ public:
             BMTVisionResult result;
             float *output_data = (float *)outputs.front()->data();
 
-            //(25200 * 85) : Yolov5
+            //(25200 * 85) : Yolov5, Yolov7
+            //(8400 * 85) : Yolov6
             //(84 * 8400) : Yolov5u, Yolov8, Yolov9, Yolo11, Yolo12
             //(300 * 6) : Yolov10
             vector<float> output(output_data, output_data + (84 * 8400));
