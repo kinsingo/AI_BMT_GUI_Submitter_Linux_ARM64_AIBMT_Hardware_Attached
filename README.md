@@ -1,4 +1,4 @@
-> **Last Updated:** 2026-04-06 (Version 2.7)
+> **Last Updated:** 2026-04-06 (Version 2.7), (ai-bmt-power-api : v2.0.0)
 
 ## Environment
 
@@ -106,25 +106,19 @@ public:
   cmake -G "Ninja" ..
   ```
 
-**2. Setting Library Path for Executable in Current Directory**
-
-- Run the following command to make the executable(AI_BMT_GUI_Submitter) can reference the libraries located in the lib folder of the current directory.
-  ```bash
-  export LD_LIBRARY_PATH=$(pwd)/lib
-  ```
-
-**3. Build the project**
+**2. Build the project**
 
 - Run the following command to build the project using the build system configured by CMake in the current directory. This will compile the project and create the executable AI_BMT_GUI_Submitter.exe in the build folder.
   ```bash
   cmake --build .
   ```
 
-**4. Start Performance Analysis**
+**3. Start Performance Analysis**
 
-- Run the following command to start created excutable. When the GUI Popup, Click [Start BMT] button to start AI Performance Analysis.
+- Run the following commands to start the executable. `sudo` is required for power measurement. `xauth extract` passes the X11 display cookie to the root process so the GUI can be shown. This works for both **local** and **SSH (X11 Forwarding)** environments. When the GUI pops up, click [Start BMT] to begin AI Performance Analysis.
   ```bash
-  ./AI_BMT_GUI_Submitter
+  xauth extract /tmp/.Xauth_bmt $DISPLAY
+  sudo DISPLAY=$DISPLAY XAUTHORITY=/tmp/.Xauth_bmt LD_LIBRARY_PATH=$(pwd)/lib ./AI_BMT_GUI_Submitter
   ```
 
 **Run all commands at once (For Initial Build)**
@@ -139,9 +133,9 @@ sudo apt install unzip
 rm -rf CMakeCache.txt CMakeFiles .ninja* build.ninja rules.ninja \
      cmake_install.cmake compile_commands.json qtcsettings.cmake .qtc AI_BMT_GUI_Submitter
 cmake -G "Ninja" ..
-export LD_LIBRARY_PATH=$(pwd)/lib
 cmake --build .
-./AI_BMT_GUI_Submitter
+xauth extract /tmp/.Xauth_bmt $DISPLAY
+sudo DISPLAY=$DISPLAY XAUTHORITY=/tmp/.Xauth_bmt LD_LIBRARY_PATH=$(pwd)/lib ./AI_BMT_GUI_Submitter
 ```
 
 **Run all commands at once (For Rebuild)**
@@ -152,18 +146,19 @@ cmake --build .
 rm -rf CMakeCache.txt CMakeFiles .ninja* build.ninja rules.ninja \
      cmake_install.cmake compile_commands.json qtcsettings.cmake .qtc AI_BMT_GUI_Submitter
 cmake -G "Ninja" ..
-export LD_LIBRARY_PATH=$(pwd)/lib
 cmake --build .
-./AI_BMT_GUI_Submitter
+xauth extract /tmp/.Xauth_bmt $DISPLAY
+sudo DISPLAY=$DISPLAY XAUTHORITY=/tmp/.Xauth_bmt LD_LIBRARY_PATH=$(pwd)/lib ./AI_BMT_GUI_Submitter
 ```
 
 **Execute AI-BMT App**
 
 - Using following commands in `build/` directory.
+- `sudo` is required for power measurement. `xauth extract` passes the X11 display cookie to the root process so the GUI can be shown. This works for both **local** and **SSH (X11 Forwarding)** environments.
 
 ```bash
-export LD_LIBRARY_PATH=$(pwd)/lib
-./AI_BMT_GUI_Submitter
+xauth extract /tmp/.Xauth_bmt $DISPLAY
+sudo DISPLAY=$DISPLAY XAUTHORITY=/tmp/.Xauth_bmt LD_LIBRARY_PATH=$(pwd)/lib ./AI_BMT_GUI_Submitter
 ```
 
 ### 🔗 Additional Support: Remote GUI Guide

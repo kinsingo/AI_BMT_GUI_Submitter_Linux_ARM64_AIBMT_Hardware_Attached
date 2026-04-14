@@ -1,48 +1,43 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(AI_BMT_GUI_Submitter_App VERSION 0.1 LANGUAGES CXX)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 set(PROJECT_SOURCES main.cpp)
 
-# ── ONNX Runtime ──────────────────────────────────────────────────────────────
-# Headers from the official 1.20.0 ARM64 release package (third_party/).
-# The .so files are symlinked to the GPU-enabled library in the ai-bmt conda env.
-set(ONNXRUNTIME_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/third_party/onnxruntime)
-set(ONNXRUNTIME_INCLUDE  ${ONNXRUNTIME_DIR}/include)
-set(ONNXRUNTIME_LIB_DIR  ${ONNXRUNTIME_DIR}/lib)
-# Runtime provider plugin directory (CUDA / TensorRT .so files reside here)
-set(ORT_PROVIDER_DIR
-    "/home/jhyi/miniconda3/envs/ai-bmt/lib/python3.10/site-packages/onnxruntime/capi")
-
-# ── OpenCV ────────────────────────────────────────────────────────────────────
-find_package(OpenCV REQUIRED)
-
-# ── Executable ────────────────────────────────────────────────────────────────
+# Create the executable
 add_executable(AI_BMT_GUI_Submitter ${PROJECT_SOURCES})
 
-# Include directories
-target_include_directories(AI_BMT_GUI_Submitter PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${ONNXRUNTIME_INCLUDE}
-    ${OpenCV_INCLUDE_DIRS}
-)
+#DX-RT
+#Step 1: 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake) # using function & cfg cmake file
+include(dxapp.cfg)
+include(dxapp.function)
+include(toolchain.aarch64)
 
-# Link libraries
-target_link_libraries(AI_BMT_GUI_Submitter PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/build/libAI_BMT_GUI_Library.so
-    ${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so
-    ${OpenCV_LIBS}
-)
+#Step 2: Classification
+add_dxrt_lib()
+add_opencv()
 
-# Set RPATH so the binary can locate onnxruntime and its provider plugins at runtime
+# Set RPATH to include the lib directory during the build and install phases
 set_target_properties(AI_BMT_GUI_Submitter PROPERTIES
-    BUILD_RPATH   "${CMAKE_BINARY_DIR}/lib;${ONNXRUNTIME_LIB_DIR};${ORT_PROVIDER_DIR}"
-    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${ONNXRUNTIME_LIB_DIR};${ORT_PROVIDER_DIR}"
+    BUILD_RPATH "${CMAKE_BINARY_DIR}/lib"
+    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
     INSTALL_RPATH_USE_LINK_PATH TRUE
 )
 
 # Ensure RPATH is always used (not stripped out)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+
+# Step 3
+LIST(APPEND link_libs ${CMAKE_CURRENT_SOURCE_DIR}/build/libAI_BMT_GUI_Library.so)
+LIST(APPEND link_libs ${CMAKE_CURRENT_SOURCE_DIR}/build/lib/libbmtsensor.so)
+add_target(AI_BMT_GUI_Submitter)
+
+
+#Classification
+set(classification 
+classification_singleCore.cpp
+classification_multiCore_wait.cpp)
+add_executable(run_classifier ${classification})
+add_target(run_classifier)
