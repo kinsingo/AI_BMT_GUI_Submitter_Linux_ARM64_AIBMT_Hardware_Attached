@@ -20,7 +20,9 @@ class Classification_Implementation_DXNN_MultiThreads : public AI_BMT_Interface
 {
     shared_ptr<dxrt::InferenceEngine> ie;
     int input_w = 224, input_h = 224, input_c = 3;
-    const int maxConcurrentRequests = 64;
+
+    //const int maxConcurrentRequests = 64;
+    const int maxConcurrentRequests = 8; //64->8 : for hardware stability. (동시 요청 수가 많을 때 하드웨어가 불안정해지는 현상이 관찰됨)
 
 public:
     virtual InterfaceType getInterfaceType() override
@@ -54,7 +56,7 @@ public:
         Optional_Data data;
         data.cpu_type = "AI-BMT-Hardware";
         data.accelerator_type = "M1(NPU)";
-        data.submitter = "DeepX";
+        data.submitter = "DeepX " + to_string(maxConcurrentRequests) + " Threads";
         data.operating_system = "Ubuntu22.04 LTS"; // e.g., Ubuntu 20.04.5 LTS
         return data;
     }

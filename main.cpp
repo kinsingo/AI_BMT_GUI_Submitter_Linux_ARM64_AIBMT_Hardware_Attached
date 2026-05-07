@@ -64,8 +64,8 @@ int main(int argc, char *argv[])
     try
     {
        bool isCustomDataset = false;
-       shared_ptr<AI_BMT_Interface> interface = make_shared<Classification_Implementation_DXNN>(isCustomDataset);
-       // shared_ptr<AI_BMT_Interface> interface = make_shared<Classification_Implementation_DXNN_MultiThreads>();
+       //shared_ptr<AI_BMT_Interface> interface = make_shared<Classification_Implementation_DXNN>(isCustomDataset);
+      shared_ptr<AI_BMT_Interface> interface = make_shared<Classification_Implementation_DXNN_MultiThreads>();
        return AI_BMT_GUI_CALLER::call_BMT_GUI_For_Single_Task(argc, argv, interface);
     }
     catch (const exception &ex)
