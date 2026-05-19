@@ -5,21 +5,18 @@
 #include "dxrt/dxrt_api.h"
 #include "bmtsensor.h"
 
-
 using namespace std;
 using namespace cv;
 
 class Classification_Implementation_DXNN : public AI_BMT_Interface
 {
     shared_ptr<dxrt::InferenceEngine> ie;
-    int align_factor;
-    int input_w = 224, input_h = 224, input_c = 3;
-    bool isCustomDataset;
+    int resolution;
 
 public:
-    Classification_Implementation_DXNN(bool isCustomDataset)
+    Classification_Implementation_DXNN(int resolution = 224) : resolution(resolution)
     {
-        this->isCustomDataset = isCustomDataset;
+        cout << "resolution : " << this->resolution<<endl;
         if (sensor_init() != SENSOR_OK) {
             fprintf(stderr, "센서 초기화 실패\n");
         }
@@ -32,10 +29,7 @@ public:
 
     virtual InterfaceType getInterfaceType() override
     {
-        if (isCustomDataset)
-            return InterfaceType::ImageClassification_CustomDataset;
-        else
-            return InterfaceType::ImageClassification;
+        return InterfaceType::ImageClassification;
     }
 
     virtual PowerDeviceType getPowerDeviceType() override
@@ -63,8 +57,9 @@ public:
     {
         Optional_Data data;
         data.cpu_type = "AI-BMT-Hardware";
-        data.accelerator_type = "M1(NPU)";
-        data.submitter = "DeepX";
+        data.accelerator_type = "DeepX M1";
+        data.submitter = "DX-RT(v3.3.0) DX-COM(v2.3.0) FW(v2.5.6) Driver(v2.4.1)";
+        data.cooling_option = to_string(this->resolution);
         data.operating_system = "Ubuntu22.04 LTS"; // e.g., Ubuntu 20.04.5 LTS
         return data;
     }
@@ -81,33 +76,9 @@ public:
         cv::Mat input;
         input = cv::imread(imagePath, cv::IMREAD_COLOR);
         cv::cvtColor(input, input, cv::COLOR_BGR2RGB);
-
-        if (isCustomDataset)
-        {
-            const int target_short = 232;
-            const int crop = 224;
-
-            int h = input.rows;
-            int w = input.cols;
-
-            // 1) 짧은 변을 232로 맞추는 비율 (종횡비 유지)
-            double scale = static_cast<double>(target_short) / std::min(h, w);
-            int new_w = static_cast<int>(std::round(w * scale));
-            int new_h = static_cast<int>(std::round(h * scale));
-
-            // Downscale면 INTER_AREA, Upscale면 INTER_LINEAR 권장
-            int interp = (scale < 1.0) ? cv::INTER_AREA : cv::INTER_LINEAR;
-
-            cv::Mat resized;
-            cv::resize(input, resized, cv::Size(new_w, new_h), 0, 0, interp);
-
-            // 2) 중심 224x224 크롭
-            int x = (resized.cols - crop) / 2;
-            int y = (resized.rows - crop) / 2;
-            cv::Rect roi(x, y, crop, crop);
-            input = resized(roi).clone();
+        if (resolution != 224) {
+            cv::resize(input, input, cv::Size(resolution, resolution));
         }
-
         vector<uint8_t> inputBuf(ie->GetInputSize(), 0);
         memcpy(&inputBuf[0], &input.data[0], ie->GetInputSize());
         return inputBuf;

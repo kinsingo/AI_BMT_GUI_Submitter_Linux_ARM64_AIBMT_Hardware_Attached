@@ -19,12 +19,20 @@ using namespace cv;
 class Classification_Implementation_DXNN_MultiThreads : public AI_BMT_Interface
 {
     shared_ptr<dxrt::InferenceEngine> ie;
-    int input_w = 224, input_h = 224, input_c = 3;
+    int resolution;
 
     //const int maxConcurrentRequests = 64;
     const int maxConcurrentRequests = 8; //64->8 : for hardware stability. (동시 요청 수가 많을 때 하드웨어가 불안정해지는 현상이 관찰됨)
 
 public:
+    Classification_Implementation_DXNN_MultiThreads(int resolution = 224) : resolution(resolution) 
+    {
+        cout << "resolution : " << this->resolution<<endl;    
+        if (sensor_init() != SENSOR_OK) {
+            fprintf(stderr, "센서 초기화 실패\n");
+        }    
+    }
+
     virtual InterfaceType getInterfaceType() override
     {
         return InterfaceType::ImageClassification;
@@ -55,8 +63,9 @@ public:
     {
         Optional_Data data;
         data.cpu_type = "AI-BMT-Hardware";
-        data.accelerator_type = "M1(NPU)";
-        data.submitter = "DeepX " + to_string(maxConcurrentRequests) + " Threads";
+        data.accelerator_type = "DeepX M1";
+        data.submitter = to_string(maxConcurrentRequests) + " Threads, DX-RT(v3.3.0) DX-COM(v2.3.0) FW(v2.5.6) Driver(v2.4.1)";
+        data.cooling_option = to_string(this->resolution);
         data.operating_system = "Ubuntu22.04 LTS"; // e.g., Ubuntu 20.04.5 LTS
         return data;
     }
@@ -73,6 +82,9 @@ public:
         cv::Mat input;
         input = cv::imread(imagePath, cv::IMREAD_COLOR);
         cv::cvtColor(input, input, cv::COLOR_BGR2RGB);
+        if (resolution != 224) {
+            cv::resize(input, input, cv::Size(resolution, resolution));
+        }
         vector<uint8_t> inputBuf(ie->GetInputSize(), 0);
         memcpy(&inputBuf[0], &input.data[0], ie->GetInputSize());
         return inputBuf;
