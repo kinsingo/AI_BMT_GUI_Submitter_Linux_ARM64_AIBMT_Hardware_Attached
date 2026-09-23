@@ -37,14 +37,33 @@ public:
         return PowerDeviceType::CustomDevice;
     }
 
-    virtual vector<CustomPowerSample> measureCustomPower() override
+    virtual int inPowerMeasureInterval_MS() 
+    { 
+        return 100; 
+    }
+
+   virtual vector<CustomPowerSample> measureCustomPower() override
     {
+       /*
         const char* channel_names[] = {"POWER_NPU", "POWER_SYSTEM", "POWER_USB_A", "POWER_USB_C"};
         vector<CustomPowerSample> samples;
         for (int i = 0; i < 4; i++) {
             PowerChannel ch = (PowerChannel)i;
             PowerChannelData data;
-            if (sensor_read_power_channel(ch, &data, 2) == SENSOR_OK) {
+            if (sensor_read_power_channel(ch, &data, 5) == SENSOR_OK) {
+                samples.push_back({channel_names[i], data.power});
+            } else {
+                samples.push_back({channel_names[i], 0.0});
+            }
+        }
+        return samples;
+      */
+        const char* channel_names[] = {"POWER_NPU", "POWER_SYSTEM"};
+        vector<CustomPowerSample> samples;
+        for (int i = 0; i < 2; i++) {
+            PowerChannel ch = (PowerChannel)i;
+            PowerChannelData data;
+            if (sensor_read_power_channel(ch, &data, 5) == SENSOR_OK) {
                 samples.push_back({channel_names[i], data.power});
             } else {
                 samples.push_back({channel_names[i], 0.0});

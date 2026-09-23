@@ -4,21 +4,21 @@
 #include <iterator>
 #ifdef _WIN32 //(.dll)
 #define EXPORT_SYMBOL __declspec(dllexport)
-#else //Linux(.so) and other operating systems
+#else // Linux(.so) and other operating systems
 #define EXPORT_SYMBOL
 #endif
 #include <vector>
 #include <iostream>
 #include <variant>
-#include <cstdint>//To ensure the Submitter side recognizes the uint8_t type in VariantType, this header must be included.
+#include <cstdint> //To ensure the Submitter side recognizes the uint8_t type in VariantType, this header must be included.
 #include "label_type.h"
 
 #ifdef USE_PYBIND11
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
-using PythonObject = py::object; 
+using PythonObject = py::object;
 #else
-using PythonObject = void*;      
+using PythonObject = void *;
 #endif
 
 using namespace std;
@@ -34,7 +34,8 @@ struct EXPORT_SYMBOL BMTVisionResult
     // Output tensor from object detection model.
     // This vector stores raw model outputs (e.g., bounding boxes, objectness, class scores).
     // Expected size depends on the YOLO model variant:
-    // - YOLOv5:     25200 × 85 = 2,142,000 elements
+    // - Yolov7:     25200 × 85 = 2,142,000 elements
+    // - Yolov6:     8400 * 85 = 714,000 elements
     // - YOLOv5u/8/9/11/12:  8400 × 84 = 705,600 elements
     // - YOLOv10:    300 × 6 = 1,800 elements
     vector<float> objectDetectionResult;
@@ -55,19 +56,20 @@ struct EXPORT_SYMBOL BMTLLMResult
 // These details will be uploaded to the database along with the performance data.
 struct EXPORT_SYMBOL Optional_Data
 {
-    string cpu_type; // e.g., Intel i7-9750HF
-    string accelerator_type; // e.g., DeepX M1(NPU)
-    string submitter; // e.g., DeepX
-    string cpu_core_count; // e.g., 16
-    string cpu_ram_capacity; // e.g., 32GB
-    string cooling; // e.g., Air, Liquid, Passive
-    string cooling_option; // e.g., Active, Passive (Active = with fan/pump, Passive = without fan)
+    string cpu_type;                               // e.g., Intel i7-9750HF
+    string accelerator_type;                       // e.g., DeepX M1(NPU)
+    string submitter;                              // e.g., DeepX
+    string cpu_core_count;                         // e.g., 16
+    string cpu_ram_capacity;                       // e.g., 32GB
+    string cooling;                                // e.g., Air, Liquid, Passive
+    string cooling_option;                         // e.g., Active, Passive (Active = with fan/pump, Passive = without fan)
     string cpu_accelerator_interconnect_interface; // e.g., PCIe Gen5 x16
-    string benchmark_model; // e.g., ResNet-50
-    string operating_system; // e.g., Ubuntu 20.04.5 LTS
+    string benchmark_model;                        // e.g., ResNet-50
+    string operating_system;                       // e.g., Ubuntu 20.04.5 LTS
 };
 
-struct LLMPreprocessedInput {
+struct LLMPreprocessedInput
+{
     vector<int64_t> input_ids;
     vector<int64_t> attention_mask;
     vector<int64_t> token_type_ids;
@@ -75,28 +77,25 @@ struct LLMPreprocessedInput {
     int64_t S;
 };
 
-
-
 // A variant can store and manage values only from a fixed set of types determined at compile time.
 // Since variant manages types statically, it can be used with minimal runtime type-checking overhead.
 // std::get<DataType>(variant) checks if the requested type matches the stored type and returns the value if they match.
 using VariantType = variant<
     // Vector-based types
     vector<uint8_t>, vector<uint16_t>, vector<uint32_t>, vector<int64_t>,
-    vector<int8_t>,  vector<int16_t>,  vector<int32_t>, vector<int64_t>,
+    vector<int8_t>, vector<int16_t>, vector<int32_t>, vector<int64_t>,
     vector<float>,
 
     // Raw pointer types
-    uint8_t*, uint16_t*, uint32_t*, uint64_t*,
-    int8_t*,  int16_t*,  int32_t*, int64_t*,
-    float*,
+    uint8_t *, uint16_t *, uint32_t *, uint64_t *,
+    int8_t *, int16_t *, int32_t *, int64_t *,
+    float *,
 
-    //LLM
+    // LLM
     LLMPreprocessedInput,
 
     // Python object (e.g., numpy.ndarray, torch.Tensor, etc.)
-    PythonObject
-    >;
+    PythonObject>;
 
 enum class InterfaceType
 {
@@ -110,11 +109,12 @@ enum class InterfaceType
     LLM_Bert_GLUE,
 
     LLM_QWEN_MMLU,
-    LLM_Gemma_MMLU,//251206
-    LLM_Llama_MMLU,//251206
+    LLM_Gemma_MMLU, // 251206
+    LLM_Llama_MMLU, // 251206
 };
 
-enum class PowerDeviceType{
+enum class PowerDeviceType
+{
     None,
     NvidiaGPU,
     JetsonSoC,
@@ -124,67 +124,71 @@ enum class PowerDeviceType{
 
 struct EXPORT_SYMBOL CustomPowerSample
 {
-    string name;            // channel name, e.g. "VDD_CPU", "VDD_GPU", "VDD_SOC", "VDD_MEM"
-    double measuredWatt;    // instantaneous power in watts
+    string name;         // channel name, e.g. "VDD_CPU", "VDD_GPU", "VDD_SOC", "VDD_MEM"
+    double measuredWatt; // instantaneous power in watts
 };
 
 class EXPORT_SYMBOL AI_BMT_Interface
 {
 public:
-   virtual ~AI_BMT_Interface(){}
+    virtual ~AI_BMT_Interface() {}
 
     // Optional: override to provide system metadata.
     // Returned values will be stored in the database (used for benchmarking context).
-   virtual Optional_Data getOptionalData()
-   {
-       Optional_Data data;
-       data.cpu_type = ""; // e.g., Intel i7-9750HF
-       data.accelerator_type = ""; // e.g., DeepX M1(NPU)
-       data.submitter = ""; // e.g., DeepX
-       data.cpu_core_count = ""; // e.g., 16
-       data.cpu_ram_capacity = ""; // e.g., 32GB
-       data.cooling = ""; // e.g., Air, Liquid, Passive
-       data.cooling_option = ""; // e.g., Active, Passive (Active = with fan/pump, Passive = without fan)
-       data.cpu_accelerator_interconnect_interface = ""; // e.g., PCIe Gen5 x16
-       data.benchmark_model = ""; // e.g., ResNet-50
-       data.operating_system = ""; // e.g., Ubuntu 20.04.5 LTS
-       return data;
-   }
+    virtual Optional_Data getOptionalData()
+    {
+        Optional_Data data;
+        data.cpu_type = "";                               // e.g., Intel i7-9750HF
+        data.accelerator_type = "";                       // e.g., DeepX M1(NPU)
+        data.submitter = "";                              // e.g., DeepX
+        data.cpu_core_count = "";                         // e.g., 16
+        data.cpu_ram_capacity = "";                       // e.g., 32GB
+        data.cooling = "";                                // e.g., Air, Liquid, Passive
+        data.cooling_option = "";                         // e.g., Active, Passive (Active = with fan/pump, Passive = without fan)
+        data.cpu_accelerator_interconnect_interface = ""; // e.g., PCIe Gen5 x16
+        data.benchmark_model = "";                        // e.g., ResNet-50
+        data.operating_system = "";                       // e.g., Ubuntu 20.04.5 LTS
+        return data;
+    }
 
-   // return the implemented interface task type. 
-   virtual InterfaceType getInterfaceType() = 0;
+    // return the implemented interface task type.
+    virtual InterfaceType getInterfaceType() = 0;
 
-   // Power measurement selection (default: do not measure)
-   virtual PowerDeviceType getPowerDeviceType() { return PowerDeviceType::None; }
+    // Power measurement selection (default: do not measure)
+    virtual PowerDeviceType getPowerDeviceType() { return PowerDeviceType::None; }
 
-   // This initialize(..) function is guaranteed to be called before convertToData and runInference are executed.
-   // The submitter can load the model using the provided modelPath
-   virtual void initialize(string modelPath) = 0;
+    // Requested power measurement interval in milliseconds.
+    // Used for both idle and active measurement.
+    // Must be greater than zero.
+    virtual int inPowerMeasureInterval_MS() { return 100; }
 
-   // Vision tasks: preprocessing & inference
-   // - preprocessVisionData: convert raw image file into model input format
-   // - inferVision: run inference on preprocessed data and return results
-   virtual VariantType preprocessVisionData(const string& imagePath) {throw runtime_error("preprocessVisionData(..) should be implemented for vision task");}
-   virtual vector<BMTVisionResult> inferVision(const vector<VariantType>& data) {throw runtime_error("inferVision(..) should be implemented for vision task");}
+    // This initialize(..) function is guaranteed to be called before convertToData and runInference are executed.
+    // The submitter can load the model using the provided modelPath
+    virtual void initialize(string modelPath) = 0;
 
-   // LLM tasks: preprocessing & inference
-   // - preprocessLLMData: convert raw text input into model input format
-   // - inferLLM: run inference on preprocessed data and return results
-   virtual VariantType preprocessLLMData(const LLMPreprocessedInput& llmData) {throw runtime_error("LLMPreprocessedInput(..) should be implemented for llm task");}
-   virtual vector<BMTLLMResult> inferLLM(const vector<VariantType>& data) {throw runtime_error("inferLLM(..) should be implemented for llm task");}
-   
-   // LLM MMLU tasks: first token generation for TTFT measurement
-   // - inferFirstToken: generate only the first token (AI-BMT will measure the time internally)
-   // - Returns void (we only measure TTFT, don't care about the actual first token output)
-   // - Only used for MMLU tasks that require TTFT measurement
-   virtual void inferFirstToken(const VariantType& data) {throw runtime_error("inferFirstToken(..) should be implemented for MMLU task");}
+    // Vision tasks: preprocessing & inference
+    // - preprocessVisionData: convert raw image file into model input format
+    // - inferVision: run inference on preprocessed data and return results
+    virtual VariantType preprocessVisionData(const string &imagePath) { throw runtime_error("preprocessVisionData(..) should be implemented for vision task"); }
+    virtual vector<BMTVisionResult> inferVision(const vector<VariantType> &data) { throw runtime_error("inferVision(..) should be implemented for vision task"); }
 
-   // Custom device power measurement interface
-   // Called at ~100ms intervals during async power sampling when PowerDeviceType::CustomDevice is selected.
-   // Returns a vector of per-channel power samples. Each CustomPowerSample has a channel name and power in watts.
-   // Return a non-empty vector if supported; return an empty vector (default) if not supported.
-   virtual vector<CustomPowerSample> measureCustomPower() { return {}; }
+    // LLM tasks: preprocessing & inference
+    // - preprocessLLMData: convert raw text input into model input format
+    // - inferLLM: run inference on preprocessed data and return results
+    virtual VariantType preprocessLLMData(const LLMPreprocessedInput &llmData) { throw runtime_error("LLMPreprocessedInput(..) should be implemented for llm task"); }
+    virtual vector<BMTLLMResult> inferLLM(const vector<VariantType> &data) { throw runtime_error("inferLLM(..) should be implemented for llm task"); }
+
+    // LLM MMLU tasks: first token generation for TTFT measurement
+    // - inferFirstToken: generate only the first token (AI-BMT will measure the time internally)
+    // - Returns void (we only measure TTFT, don't care about the actual first token output)
+    // - Only used for MMLU tasks that require TTFT measurement
+    virtual void inferFirstToken(const VariantType &data) { throw runtime_error("inferFirstToken(..) should be implemented for MMLU task"); }
+
+    // Custom device power measurement interface
+    // Called according to inPowerMeasureInterval_MS() during async power sampling when PowerDeviceType::CustomDevice is selected.
+    // Returns a vector of per-channel power samples. Each CustomPowerSample has a channel name and power in watts.
+    // Return a non-empty vector if supported; return an empty vector (default) if not supported.
+    virtual vector<CustomPowerSample> measureCustomPower() { return {}; }
 };
 
 #endif // AI_BMT_INTERFACE_H
-
