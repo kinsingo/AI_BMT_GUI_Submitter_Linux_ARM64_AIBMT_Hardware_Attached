@@ -45,7 +45,7 @@ public:
 
   virtual int inPowerMeasureInterval_MS() 
     { 
-        return 10; 
+        return 100; 
     }
 
    virtual vector<CustomPowerSample> measureCustomPower() override
@@ -69,7 +69,7 @@ public:
         for (int i = 0; i < 2; i++) {
             PowerChannel ch = (PowerChannel)i;
             PowerChannelData data;
-            if (sensor_read_power_channel(ch, &data, 5) == SENSOR_OK) {
+            if (sensor_read_power_channel(ch, &data, 3) == SENSOR_OK) {
                 samples.push_back({channel_names[i], data.power});
             } else {
                 samples.push_back({channel_names[i], 0.0});
