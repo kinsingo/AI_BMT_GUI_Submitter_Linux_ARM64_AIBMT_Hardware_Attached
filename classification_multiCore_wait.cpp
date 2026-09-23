@@ -45,7 +45,7 @@ public:
 
   virtual int inPowerMeasureInterval_MS() 
     { 
-        return 100; 
+        return 10; 
     }
 
    virtual vector<CustomPowerSample> measureCustomPower() override

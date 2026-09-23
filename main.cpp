@@ -64,21 +64,23 @@ int main(int argc, char *argv[])
     */
 
 /*
-aibmtExample@gmail.com
+jonghyun_shin@naver.com
 
 rm -rf CMakeCache.txt CMakeFiles .ninja* build.ninja rules.ninja \
-     cmake_install.cmake compile_commands.json qtcsettings.cmake .qtc AI_BMT_GUI_Submitter
+     cmake_install.cmake compile_commands.json qtcsettings.cmake .qtc \
+     AI_BMT_GUI_Submitter
 cmake -G "Ninja" ..
+export LD_LIBRARY_PATH="$PWD/lib:$LD_LIBRARY_PATH"
 cmake --build .
-xauth extract /tmp/.Xauth_bmt $DISPLAY
-sudo DISPLAY=$DISPLAY XAUTHORITY=/tmp/.Xauth_bmt LD_LIBRARY_PATH=$(pwd)/lib ./AI_BMT_GUI_Submitter
+xauth extract /tmp/.Xauth_bmt "$DISPLAY"
+./AI_BMT_GUI_Submitter   
 */
 
     try
     {
-       //bool resolution = 224;
-       //shared_ptr<AI_BMT_Interface> interface = make_shared<Classification_Implementation_DXNN>();
-       shared_ptr<AI_BMT_Interface> interface = make_shared<Classification_Implementation_DXNN_MultiThreads>();
+       int resolution = 224;
+       //shared_ptr<AI_BMT_Interface> interface = make_shared<Classification_Implementation_DXNN>(resolution);
+       shared_ptr<AI_BMT_Interface> interface = make_shared<Classification_Implementation_DXNN_MultiThreads>(resolution);
        return AI_BMT_GUI_CALLER::call_BMT_GUI_For_Single_Task(argc, argv, interface);
     }
     catch (const exception &ex)
